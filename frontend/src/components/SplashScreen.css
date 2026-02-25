@@ -1,0 +1,42 @@
+.splash-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: #1F2933;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  overflow: hidden;
+  perspective: 1000px;
+}
+
+.splash-content {
+  text-align: center;
+}
+
+.splash-text {
+  font-size: 5rem;
+  font-weight: 800;
+  color: #a4dfcc;
+  margin: 0;
+  display: flex;
+  gap: 0.2rem;
+  font-family: 'Agraham', system-ui, -apple-system, sans-serif;
+  letter-spacing: 2px;
+}
+
+.splash-char {
+  display: inline-block;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+@media (max-width: 768px) {
+  .splash-text {
+    font-size: 3rem;
+  }
+}
