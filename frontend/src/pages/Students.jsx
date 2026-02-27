@@ -272,6 +272,14 @@ const Students = () => {
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Academic Cycle (Semester)</label>
                   <input required type="number" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all font-bold text-slate-800" value={formData.semester} onChange={e => setFormData({ ...formData, semester: e.target.value })} />
                 </div>
+                <div className="col-span-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Official Email Address</label>
+                  <input required type="email" className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all font-bold text-slate-800" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@institution.edu" />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Contact Phone Number</label>
+                  <input required className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all font-bold text-slate-800" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 XXXXX XXXXX" />
+                </div>
               </div>
               <button type="submit" className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10">
                 {editingStudent ? "Execute Update" : "Establish Registry"}

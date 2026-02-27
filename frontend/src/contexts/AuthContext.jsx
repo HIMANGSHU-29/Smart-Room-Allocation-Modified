@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 const AuthContext = createContext();
 
@@ -9,29 +11,45 @@ export const AuthProvider = ({ children }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            // In a real app, you'd verify the token with the backend
-            setUser({ token });
-        }
-        setLoading(false);
+        console.log("AuthProvider: Initializing Firebase Auth observer...");
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            console.log("AuthProvider: Auth state changed:", firebaseUser ? "User logged in" : "No user");
+            if (firebaseUser) {
+                setUser(firebaseUser);
+            } else {
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    const login = (token) => {
-        localStorage.setItem("token", token);
-        setUser({ token });
+    const login = () => {
         navigate("/dashboard");
     };
 
-    const logout = () => {
-        localStorage.removeItem("token");
-        setUser(null);
-        navigate("/login");
+    const logout = async () => {
+        try {
+            await signOut(auth);
+            localStorage.removeItem("token");
+            setUser(null);
+            navigate("/login");
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
     };
 
     return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>
-            {!loading && children}
+            {loading ? (
+                <div className="min-h-screen flex items-center justify-center bg-[#FFFAF0]">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <p className="text-slate-500 font-medium animate-pulse">Initializing Secure Session...</p>
+                    </div>
+                </div>
+            ) : children}
         </AuthContext.Provider>
     );
 };

@@ -2,6 +2,7 @@ import Student from "../models/student.js";
 import Room from "../models/room.js";
 
 export const getDashboardStats = async (req, res) => {
+    console.log("Fetching dashboard stats...");
     try {
         const [totalStudents, totalHalls, seatedStudents] = await Promise.all([
             Student.countDocuments({}),

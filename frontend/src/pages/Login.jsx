@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
-import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import API from "../services/api";
+import { ArrowLeft } from "lucide-react";
+import { toast } from "react-toastify";
+import { auth } from "../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
@@ -16,15 +17,19 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await API.post("/auth/login", {
-        email,
-        password,
-      });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
 
-      login(res.data.token);
+      // Store token for backend compatibility if needed
+      localStorage.setItem("token", token);
+
+      login(); // Redirects to dashboard
       toast.success("Login successful!");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid email or password");
+      const errorMessage = err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
+        ? "Invalid email or password"
+        : "Authentication failed. Please check your credentials.";
+      toast.error(errorMessage);
       console.error(err);
     } finally {
       setLoading(false);

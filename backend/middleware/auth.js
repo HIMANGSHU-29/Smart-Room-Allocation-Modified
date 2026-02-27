@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
+import admin from "firebase-admin";
 
-export const protect = (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -17,13 +17,12 @@ export const protect = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.adminId = decoded.id;
-
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.adminId = decodedToken.uid;
     next();
 
   } catch (err) {
+    console.error("Firebase Auth Error (Secondary):", err);
     res.status(401).json({
       message: "Invalid token",
     });

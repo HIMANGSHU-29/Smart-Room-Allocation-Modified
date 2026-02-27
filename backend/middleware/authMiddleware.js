@@ -1,5 +1,4 @@
-import jwt from "jsonwebtoken";
-import Admin from "../models/admin.js";
+import admin from "firebase-admin";
 
 export const protect = async (req, res, next) => {
     let token;
@@ -12,19 +11,18 @@ export const protect = async (req, res, next) => {
             // Get token from header
             token = req.headers.authorization.split(" ")[1];
 
-            // Verify token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log("Verifying token...");
+            // Verify Firebase Token
+            const decodedToken = await admin.auth().verifyIdToken(token);
+            console.log("Token verified for UID:", decodedToken.uid);
 
-            // Get admin from the token
-            req.admin = await Admin.findById(decoded.id).select("-password");
-
-            if (!req.admin) {
-                return res.status(401).json({ message: "Not authorized, user not found" });
-            }
+            // Set user info from decoded token
+            req.user = decodedToken;
+            req.adminId = decodedToken.uid; // For compatibility with older code if any
 
             next();
         } catch (error) {
-            console.error(error);
+            console.error("Firebase Auth Error:", error);
             res.status(401).json({ message: "Not authorized, token failed" });
         }
     }

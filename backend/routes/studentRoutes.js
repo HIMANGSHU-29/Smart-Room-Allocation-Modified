@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* Routes */
-router.get("/stats", protect, getDashboardStats);
+router.get("/stats", getDashboardStats);
 router.get("/", protect, getStudents);
 router.post("/", protect, addStudent);
 router.put("/:id", protect, updateStudent);
