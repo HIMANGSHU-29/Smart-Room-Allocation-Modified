@@ -4,6 +4,8 @@ const roomSchema = new mongoose.Schema({
   roomNo: String,
   block: String,
   capacity: Number,
+  totalRows: { type: Number, default: 10 },
+  totalColumns: { type: Number, default: 6 },
   filled: { type: Number, default: 0 },
   gender: {
     type: String,

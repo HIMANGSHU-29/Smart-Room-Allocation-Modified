@@ -12,10 +12,12 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Landing from "./pages/Landing";
 import Search from "./pages/Search";
+import Exams from "./pages/Exams";
 
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SplashScreen from "./components/SplashScreen";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useState } from "react";
 
 export default function App() {
@@ -26,7 +28,8 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
       <AuthProvider>
         <Routes>
           {/* Root */}
@@ -51,6 +54,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="students" element={<Students />} />
             <Route path="rooms" element={<Rooms />} />
+            <Route path="exams" element={<Exams />} />
             <Route path="allocation" element={<Allocation />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
@@ -59,5 +63,6 @@ export default function App() {
         <ToastContainer position="top-right" autoClose={3000} />
       </AuthProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }

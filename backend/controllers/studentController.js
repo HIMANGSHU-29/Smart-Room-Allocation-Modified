@@ -148,6 +148,16 @@ export const getStudents = async (req, res) => {
   }
 };
 
+/* Get Distinct Departments */
+export const getDistinctDepartments = async (req, res) => {
+  try {
+    const departments = await Student.distinct("department");
+    res.json(departments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 /* Add Student Manually */
 export const addStudent = async (req, res) => {
   try {

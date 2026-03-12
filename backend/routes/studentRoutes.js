@@ -9,6 +9,7 @@ import {
   deleteStudent,
   addStudent,
   updateStudent,
+  getDistinctDepartments,
 } from "../controllers/studentController.js";
 import { getDashboardStats } from "../controllers/statsController.js";
 
@@ -30,6 +31,7 @@ const upload = multer({ storage });
 
 /* Routes */
 router.get("/stats", getDashboardStats);
+router.get("/departments", protect, getDistinctDepartments);
 router.get("/", protect, getStudents);
 router.post("/", protect, addStudent);
 router.put("/:id", protect, updateStudent);

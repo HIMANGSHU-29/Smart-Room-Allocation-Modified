@@ -1,13 +1,17 @@
 import { Link } from "react-router-dom";
 import { ShieldCheck, ArrowRight, Layers, Users, Zap } from "lucide-react";
 import logo from "../assets/logo.svg";
+import bgImage from "../assets/bg.png";
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-[#FFFAF0] flex flex-col text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
+    <div 
+      className="min-h-screen flex flex-col text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden"
+      style={{ backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}
+    >
       {/* Navigation */}
       <div className="px-4 md:px-6 pt-4 md:pt-6 sticky top-0 z-50">
-        <nav className="px-6 md:px-12 h-16 md:h-20 flex items-center justify-between border border-slate-200 rounded-[1.5rem] shadow-xl shadow-slate-200/50 backdrop-blur-md">
+        <nav className="bg-[#fffaf0] px-6 md:px-12 h-16 md:h-20 flex items-center justify-between border border-slate-200 rounded-[1.5rem] shadow-xl shadow-slate-200/50 backdrop-blur-md">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-900/20 overflow-hidden p-1.5">
               <img src={logo} alt="AllocateU Logo" className="w-full h-full object-contain" />

@@ -10,6 +10,9 @@ import studentRoutes from "./routes/studentRoutes.js";
 import allocationRoutes from "./routes/allocationRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import examRoutes from "./routes/examRoutes.js";
+import examAllocationRoutes from "./routes/examAllocationRoutes.js";
+import errorRoutes from "./routes/errorRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -28,6 +31,9 @@ app.use("/api/students", studentRoutes);
 app.use("/api/allocation", allocationRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/exams", examRoutes);
+app.use("/api/exam-allocation", examAllocationRoutes);
+app.use("/api/errors", errorRoutes);
 
 app.get("/", (req, res) => {
   res.send("API Running...");
