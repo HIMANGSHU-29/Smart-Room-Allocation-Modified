@@ -1,12 +1,37 @@
 import { FileText, Download, Search, MapPin } from "lucide-react";
 import logo from "../assets/logo.svg";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import API from "../services/api";
 
 export default function Reports() {
-  const [roomNo, setRoomNo] = useState("");
+  const [examId, setExamId] = useState("");
+  const [roomId, setRoomId] = useState("");
+  
+  const [exams, setExams] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  
   const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [examRes, roomRes] = await Promise.all([
+        API.get("/exams"),
+        API.get("/rooms")
+      ]);
+      setExams(examRes.data);
+      setRooms(roomRes.data);
+    } catch {
+      toast.error("Failed to fetch system data for reports");
+    } finally {
+      setInitialLoad(false);
+    }
+  };
 
   const downloadMaster = async () => {
     try {
@@ -16,24 +41,29 @@ export default function Reports() {
       a.href = url;
       a.download = "master_report.pdf";
       a.click();
-    } catch (err) {
+    } catch {
       toast.error("Master report generation failed");
     }
   };
 
   const downloadRoom = async () => {
-    if (!roomNo) return toast.warning("Please specify a room number");
+    if (!examId || !roomId) return toast.warning("Please select both Exam and Venue");
+    
     try {
       setLoading(true);
-      const res = await API.get(`/reports/pdf/room/${roomNo}`, { responseType: "blob" });
+      const res = await API.get(`/reports/pdf/exam/${examId}/room/${roomId}`, { responseType: "blob" });
       const url = window.URL.createObjectURL(res.data);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `room_${roomNo}_report.pdf`;
+      a.download = `Exam_Venue_Report.pdf`;
       a.click();
-      toast.success(`Report for Venue ${roomNo} ready`);
+      toast.success(`Venue Report Generated Successfully`);
     } catch (err) {
-      toast.error("Room-specific report failed. Verify venue identifier.");
+      if (err.response?.status === 404) {
+          toast.info("No candidates or invigilators found for this specific session and room.");
+      } else {
+          toast.error("Report generation failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,15 +99,36 @@ export default function Reports() {
           </div>
           <h2 className="text-xl font-black text-slate-800 mb-6 uppercase tracking-tight">Targeted Venue</h2>
 
-          <div className="w-full relative mb-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-            <input
-              type="text"
-              placeholder="Room Number..."
-              className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-bold text-xs"
-              value={roomNo}
-              onChange={(e) => setRoomNo(e.target.value)}
-            />
+          <div className="w-full text-left mb-6 space-y-4">
+            
+            <div className="relative">
+              <select
+                value={examId}
+                onChange={(e) => setExamId(e.target.value)}
+                disabled={initialLoad}
+                className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-bold text-xs appearance-none text-slate-700"
+              >
+                <option value="">-- Select Exam Timeline --</option>
+                {exams.map(ex => (
+                    <option key={ex._id} value={ex._id}>{ex.examName} ({new Date(ex.date).toLocaleDateString()})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <select
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+                disabled={initialLoad}
+                className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-bold text-xs appearance-none text-slate-700"
+              >
+                <option value="">-- Select Venue --</option>
+                {rooms.map(rm => (
+                    <option key={rm._id} value={rm._id}>Room {rm.roomNo} (Cap: {rm.capacity})</option>
+                ))}
+              </select>
+            </div>
+
           </div>
 
           <button

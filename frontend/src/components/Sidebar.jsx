@@ -22,8 +22,16 @@ export default function Sidebar() {
           🏫 Rooms
         </Link>
 
+        <Link to="/dashboard/teachers" className="block p-2 rounded hover:bg-blue-50">
+          👩‍🏫 Teachers
+        </Link>
+
         <Link to="/dashboard/allocation" className="block p-2 rounded hover:bg-blue-50">
           🔄 Allocation
+        </Link>
+
+        <Link to="/dashboard/roster" className="block p-2 rounded hover:bg-blue-50 text-indigo-700 font-medium">
+          👔 Duty Roster
         </Link>
 
         <Link to="/dashboard/reports" className="block p-2 rounded hover:bg-blue-50">

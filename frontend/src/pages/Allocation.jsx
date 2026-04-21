@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { Play, RotateCcw, Users, ClipboardList, AlertCircle, FileText, Zap, X } from "lucide-react";
 import logo from "../assets/logo.svg";
@@ -8,12 +8,17 @@ const Allocation = () => {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [stats, setStats] = useState(null);
-  const [showMixingModal, setShowMixingModal] = useState(false);
+  
+  // Wizard state
+  const [showWizardModal, setShowWizardModal] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [allocationType, setAllocationType] = useState(""); // "exam" or "class"
 
   const handleRunSeating = async (mixingType = "random") => {
     try {
       setLoading(true);
-      setShowMixingModal(false);
+      setShowWizardModal(false);
+      setWizardStep(1);
       const { data } = await API.post("/allocation/run", { mixingType });
       setStats(data);
       toast.success(data.message);
@@ -32,7 +37,7 @@ const Allocation = () => {
       const { data } = await API.post("/allocation/reset");
       setStats(null);
       toast.success(data.message);
-    } catch (err) {
+    } catch {
       toast.error("Reset failed");
     } finally {
       setResetting(false);
@@ -58,7 +63,7 @@ const Allocation = () => {
             Execute randomized shuffle protocols across candidate sectors to ensure peak institutional integrity.
           </p>
           <button
-            onClick={() => setShowMixingModal(true)}
+            onClick={() => { setShowWizardModal(true); setWizardStep(1); setAllocationType(""); }}
 
             disabled={loading || resetting}
             className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 disabled:opacity-30"
@@ -125,32 +130,81 @@ const Allocation = () => {
         </div>
       </div>
 
-      {showMixingModal && (
+      {showWizardModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
             <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-              <h3 className="text-xl font-black text-slate-800 uppercase italic tracking-tight">Allocation Protocols</h3>
-              <button onClick={() => setShowMixingModal(false)} className="p-2 hover:bg-white rounded-xl transition-all text-slate-400 hover:text-slate-900"><X size={20} /></button>
+              <h3 className="text-xl font-black text-slate-800 uppercase italic tracking-tight">
+                {wizardStep === 1 ? "Select Allocation Type" : "Select Routine Mixing"}
+              </h3>
+              <button onClick={() => { setShowWizardModal(false); setWizardStep(1); }} className="p-2 hover:bg-white rounded-xl transition-all text-slate-400 hover:text-slate-900"><X size={20} /></button>
             </div>
+            
             <div className="p-8 space-y-4">
-              <MixingOption
-                title="Random Shuffle"
-                desc="Maximum institutional integrity with full randomization."
-                icon={<Zap size={20} />}
-                onClick={() => handleRunSeating("random")}
-              />
-              <MixingOption
-                title="Departmental Block"
-                desc="Group candidates by academic division."
-                icon={<Users size={20} />}
-                onClick={() => handleRunSeating("department")}
-              />
-              <MixingOption
-                title="Sequential Registry"
-                desc="Strict alignment by roll number sequence."
-                icon={<ClipboardList size={20} />}
-                onClick={() => handleRunSeating("sequential")}
-              />
+              {wizardStep === 1 && (
+                <>
+                  <MixingOption
+                    title="Exam Seating"
+                    desc="Allocate students with specific gap requirements for examinations."
+                    icon={<ClipboardList size={20} />}
+                    onClick={() => {
+                      setAllocationType("exam");
+                      setWizardStep(2);
+                    }}
+                  />
+                  <MixingOption
+                    title="Class Routine"
+                    desc="Allocate students (and teachers) to maximum capacity for daily classes."
+                    icon={<Users size={20} />}
+                    onClick={() => {
+                      setAllocationType("class");
+                      setWizardStep(2); // In the future, this might redirect to a timetable UI instead
+                    }}
+                  />
+                </>
+              )}
+
+              {wizardStep === 2 && allocationType === "exam" && (
+                <>
+                  <MixingOption
+                    title="Random Shuffle"
+                    desc="Maximum institutional integrity with full randomization."
+                    icon={<Zap size={20} />}
+                    onClick={() => handleRunSeating("random")}
+                  />
+                  <MixingOption
+                    title="Departmental Block"
+                    desc="Group candidates by academic division."
+                    icon={<Users size={20} />}
+                    onClick={() => handleRunSeating("department")}
+                  />
+                  <MixingOption
+                    title="Sequential Registry"
+                    desc="Strict alignment by roll number sequence."
+                    icon={<ClipboardList size={20} />}
+                    onClick={() => handleRunSeating("sequential")}
+                  />
+                  <button onClick={() => setWizardStep(1)} className="mt-4 text-xs font-bold text-slate-500 hover:text-slate-800 tracking-widest uppercase transition-colors">
+                    ← Back
+                  </button>
+                </>
+              )}
+
+              {wizardStep === 2 && allocationType === "class" && (
+                <>
+                   {/* Placeholder for the real class routine logic */}
+                   <div className="text-center py-6 text-slate-500">
+                     <Users size={48} className="mx-auto mb-4 text-slate-200" />
+                     <p className="font-bold text-slate-700 mb-2">Class Routine Logic Setup</p>
+                     <p className="text-xs leading-relaxed">
+                       We need to set up Timetables and Day configurations before we can map Teachers and Students properly.
+                     </p>
+                   </div>
+                   <button onClick={() => setWizardStep(1)} className="w-full mt-4 py-3 text-xs font-bold text-slate-500 bg-slate-50 rounded-xl hover:text-slate-800 tracking-widest uppercase transition-colors">
+                    ← Back
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

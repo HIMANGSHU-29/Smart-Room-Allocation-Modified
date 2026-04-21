@@ -9,7 +9,7 @@ const Students = () => {
   const [file, setFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [department, setDepartment] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, _setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showModal, setShowModal] = useState(false);
@@ -31,7 +31,7 @@ const Students = () => {
       const { data } = await API.get(`/students?search=${searchTerm}&department=${department}&status=${status}&page=${page}`);
       setStudents(data.students);
       setTotalPages(data.totalPages);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch students");
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ const Students = () => {
       fetchStudents();
     }, 500);
     return () => clearTimeout(delayDebounce);
-  }, [searchTerm, department, status, page]);
+  }, [searchTerm, department, status, page]); // Intentionally omitting fetchStudents to avoid loop
 
   const handleUpload = async () => {
     if (!file) return toast.warning("Please select a file");
@@ -60,7 +60,7 @@ const Students = () => {
       toast.success("Upload successful");
       setFile(null);
       fetchStudents();
-    } catch (err) {
+    } catch {
       toast.error("Upload failed");
     } finally {
       setLoading(false);
@@ -91,8 +91,23 @@ const Students = () => {
       await API.delete(`/students/${id}`);
       toast.success("Student deleted");
       fetchStudents();
-    } catch (err) {
+    } catch {
       toast.error("Delete failed");
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm("CRITICAL WARNING: Are you absolutely sure you want to wipe the entire examinee registry? This action cannot be undone.")) return;
+    try {
+      setLoading(true);
+      await API.delete("/students/all");
+      toast.success("Registry wiped successfully");
+      setPage(1);
+      fetchStudents();
+    } catch {
+      toast.error("Failed to wipe registry");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -118,13 +133,23 @@ const Students = () => {
             <div className="w-6 md:w-8 h-px bg-blue-200" /> Operational / Registry Registry
           </p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowModal(true); }}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 md:px-6 py-3 md:py-3.5 rounded-xl md:rounded-2xl hover:bg-blue-700 transition-all font-bold shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] text-xs md:text-sm group w-full md:w-auto"
-        >
-          <Plus size={16} className="group-hover:rotate-90 transition-all duration-300" />
-          Register Candidate
-        </button>
+        <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+          <button
+            onClick={handleDeleteAll}
+            disabled={loading || students.length === 0}
+            className="flex items-center justify-center gap-2 bg-rose-50 text-rose-600 px-4 md:px-6 py-3 md:py-3.5 rounded-xl md:rounded-2xl hover:bg-rose-100 disabled:opacity-50 transition-all font-bold text-xs md:text-sm w-full md:w-auto border border-rose-100 shadow-sm"
+          >
+            <Trash2 size={16} />
+            Wipe Registry
+          </button>
+          <button
+            onClick={() => { resetForm(); setShowModal(true); }}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 md:px-6 py-3 md:py-3.5 rounded-xl md:rounded-2xl hover:bg-blue-700 transition-all font-bold shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] text-xs md:text-sm group w-full md:w-auto"
+          >
+            <Plus size={16} className="group-hover:rotate-90 transition-all duration-300" />
+            Register Candidate
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 mb-8 flex flex-wrap items-center gap-6">

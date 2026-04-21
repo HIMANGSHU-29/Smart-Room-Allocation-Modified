@@ -4,6 +4,8 @@ import ExamSchedule from "../models/examSchedule.js";
 import SeatAllocation from "../models/seatAllocation.js";
 import Room from "../models/room.js";
 import Student from "../models/student.js";
+import Teacher from "../models/teacher.js";
+import DutyRoster from "../models/dutyRoster.js";
 
 export const allocateSeatsForExam = async (req, res) => {
     try {
@@ -128,12 +130,119 @@ export const allocateSeatsForExam = async (req, res) => {
             return res.status(500).json({ message: "Algorithm failed to assign all students, potentially due to bad matrix layout vs target limits." });
         }
 
-        // Batch insert
+        // Batch insert seat mappings
         const inserted = await SeatAllocation.insertMany(newAllocations);
+
+        // Batch update student statuses to 'Allocated' so the dashboard syncs
+        const allocatedStudentIds = newAllocations.map(a => a.studentId);
+        await Student.updateMany(
+            { _id: { $in: allocatedStudentIds } },
+            { $set: { allocationStatus: "Allocated" } }
+        );
 
         res.status(201).json({
             message: "Seats allocated successfully",
             allocatedCount: inserted.length
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const allocateInvigilatorsForExam = async (req, res) => {
+    try {
+        const { examId } = req.body;
+
+        const exam = await Exam.findById(examId);
+        if (!exam) return res.status(404).json({ message: "Exam not found" });
+
+        // 1. Fetch all assigned rooms for this exam
+        const schedules = await ExamSchedule.find({ examId }).populate("roomId").sort({ "roomId.roomNo": 1 });
+        if (!schedules.length) {
+            return res.status(400).json({ message: "No rooms scheduled for this exam yet" });
+        }
+
+        const rooms = schedules.map(s => s.roomId);
+
+        // 2. Fetch all eligible invigilators
+        // Optional future enhancement: filter out teachers where `unavailableDates` includes the exam date
+        const eligibleTeachers = await Teacher.find({ isInvigilator: true });
+        
+        if (eligibleTeachers.length < rooms.length) {
+            return res.status(400).json({ 
+                message: `Not enough eligible teachers. Need ${rooms.length}, but only found ${eligibleTeachers.length}.` 
+            });
+        }
+
+        // 3. To enforce maxExamDuties, we need to know how many duties each teacher already has globally
+        // This aggregation counts how many times each teacherId appears across ALL DutyRosters
+        const currentDutyCounts = await DutyRoster.aggregate([
+            { $group: { _id: "$teacherId", count: { $sum: 1 } } }
+        ]);
+        
+        const dutyMap = {};
+        currentDutyCounts.forEach(t => {
+            dutyMap[t._id.toString()] = t.count;
+        });
+
+        // 4. Sort teachers by fewest existing duties first to ensure fair distribution
+        let availablePool = [...eligibleTeachers].sort((a, b) => {
+            const countA = dutyMap[a._id.toString()] || 0;
+            const countB = dutyMap[b._id.toString()] || 0;
+            return countA - countB;
+        });
+
+        // 5. Clear previous duty roster for this specific exam to allow re-running the algorithm safely
+        await DutyRoster.deleteMany({ examId });
+
+        const newDuties = [];
+
+        // 6. Assign one teacher per room
+        for (const room of rooms) {
+            
+            // Find the next teacher who hasn't exceeded their limit
+            let selectedTeacherIdx = -1;
+            
+            for (let i = 0; i < availablePool.length; i++) {
+                const teacher = availablePool[i];
+                const currentCount = dutyMap[teacher._id.toString()] || 0;
+                const maxDuties = teacher.maxExamDuties || 5;
+
+                if (currentCount < maxDuties) {
+                    selectedTeacherIdx = i;
+                    // Increment their theoretical count for the next iteration
+                    dutyMap[teacher._id.toString()] = currentCount + 1;
+                    break;
+                }
+            }
+
+            if (selectedTeacherIdx === -1) {
+                // If we get here, everyone available is maxed out
+                return res.status(400).json({ 
+                    message: `Algorithm failed. All remaining ${availablePool.length} teachers have reached their maxExamDuties limit.` 
+                });
+            }
+
+            const assignedTeacher = availablePool[selectedTeacherIdx];
+            
+            newDuties.push({
+                examId,
+                roomId: room._id,
+                teacherId: assignedTeacher._id
+            });
+
+            // Remove this teacher from the pool so they don't get assigned to a second room in the SAME exam
+            availablePool.splice(selectedTeacherIdx, 1);
+        }
+
+        // 7. Batch insert
+        const inserted = await DutyRoster.insertMany(newDuties);
+
+        res.status(201).json({
+            message: "Invigilators allocated successfully",
+            allocatedCount: inserted.length,
+            roster: inserted
         });
 
     } catch (error) {

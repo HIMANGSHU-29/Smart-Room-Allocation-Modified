@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "../contexts/AuthContext";
-import bgImage from "../assets/bg.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -39,8 +38,7 @@ export default function Login() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center relative p-4"
-      style={{ backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}
+      className="min-h-screen flex items-center justify-center relative p-4 bg-[#fffaf0]"
     >
       <Link
         to="/"

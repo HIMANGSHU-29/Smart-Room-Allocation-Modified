@@ -7,6 +7,7 @@ import {
   uploadStudents,
   getStudents,
   deleteStudent,
+  deleteAllStudents,
   addStudent,
   updateStudent,
   getDistinctDepartments,
@@ -34,6 +35,7 @@ router.get("/stats", getDashboardStats);
 router.get("/departments", protect, getDistinctDepartments);
 router.get("/", protect, getStudents);
 router.post("/", protect, addStudent);
+router.delete("/all", protect, deleteAllStudents); // MUST be before /:id
 router.put("/:id", protect, updateStudent);
 router.delete("/:id", protect, deleteStudent);
 router.post("/upload", protect, upload.single("file"), uploadStudents);

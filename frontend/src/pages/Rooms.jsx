@@ -5,7 +5,7 @@ import API from "../services/api";
 
 const Rooms = () => {
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
 
@@ -23,7 +23,7 @@ const Rooms = () => {
       setLoading(true);
       const { data } = await API.get("/rooms");
       setRooms(data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch exam halls");
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ const Rooms = () => {
       await API.delete(`/rooms/${id}`);
       toast.success("Hall removed");
       fetchRooms();
-    } catch (err) {
+    } catch {
       toast.error("Delete failed");
     }
   };

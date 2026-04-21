@@ -1,6 +1,19 @@
 import Student from "../models/student.js";
+import SeatAllocation from "../models/seatAllocation.js";
 import csv from "csv-parser";
 import fs from "fs";
+import Joi from "joi";
+import logger from "../utils/logger.js";
+
+const studentValidationSchema = Joi.object({
+  name: Joi.string().max(100).required(),
+  rollNumber: Joi.string().required(),
+  department: Joi.string().required(),
+  semester: Joi.number().required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().required(),
+  gender: Joi.string().valid("Male", "Female", "Other").required(),
+});
 
 // Helper for file cleanup
 const cleanup = (path) => {
@@ -103,9 +116,9 @@ export const uploadStudents = async (req, res) => {
         return res.status(500).json({ message: "CSV parsing failed", error: err.message });
       });
   } catch (err) {
-    console.error("UPLOAD ERROR:", err);
+    logger.error("UPLOAD ERROR:", err);
     if (req.file?.path) cleanup(req.file.path);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ error: "Server error", details: err.message });
   }
 };
 
@@ -133,6 +146,7 @@ export const getStudents = async (req, res) => {
       .sort({ rollNumber: 1 })
       .skip(skip)
       .limit(take)
+      .lean()
       .exec();
 
     const count = await Student.countDocuments(query);
@@ -144,7 +158,8 @@ export const getStudents = async (req, res) => {
       totalStudents: count,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    logger.error("getStudents Error:", err);
+    res.status(500).json({ error: "Failed to fetch student records" });
   }
 };
 
@@ -161,15 +176,20 @@ export const getDistinctDepartments = async (req, res) => {
 /* Add Student Manually */
 export const addStudent = async (req, res) => {
   try {
-    const data = { ...req.body };
-    if (data.email) data.email = data.email.toLowerCase();
+    const { error, value } = studentValidationSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
-    const student = await Student.create(data);
+    if (value.email) value.email = value.email.toLowerCase();
+
+    const student = await Student.create(value);
     res.status(201).json(student);
   } catch (err) {
+    logger.error("addStudent Error:", err);
     res.status(400).json({
-      message: err.code === 11000 ? "Roll number, Email, or Phone already exists." : "Add failed",
-      error: err.message
+      error: err.code === 11000 ? "Roll number, Email, or Phone already exists." : "Add failed",
+      details: err.message
     });
   }
 };
@@ -177,16 +197,21 @@ export const addStudent = async (req, res) => {
 /* Update Student */
 export const updateStudent = async (req, res) => {
   try {
-    const data = { ...req.body };
-    if (data.email) data.email = data.email.toLowerCase();
+    const { error, value } = studentValidationSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
-    const student = await Student.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true });
-    if (!student) return res.status(404).json({ message: "Student not found" });
+    if (value.email) value.email = value.email.toLowerCase();
+
+    const student = await Student.findByIdAndUpdate(req.params.id, value, { new: true, runValidators: true }).lean();
+    if (!student) return res.status(404).json({ error: "Student not found" });
     res.json(student);
   } catch (err) {
+    logger.error("updateStudent Error:", err);
     res.status(400).json({
-      message: err.code === 11000 ? "Roll number, Email, or Phone already exists." : "Update failed",
-      error: err.message
+      error: err.code === 11000 ? "Roll number, Email, or Phone already exists." : "Update failed",
+      details: err.message
     });
   }
 };
@@ -197,7 +222,19 @@ export const deleteStudent = async (req, res) => {
     await Student.findByIdAndDelete(req.params.id);
     res.json({ message: "Student deleted" });
   } catch (err) {
-    res.status(500).json({ message: "Delete failed", error: err.message });
+    logger.error("deleteStudent Error:", err);
+    res.status(500).json({ error: "Delete failed. Contact admin." });
+  }
+};
+
+/* Delete All Students */
+export const deleteAllStudents = async (req, res) => {
+  try {
+    await Student.deleteMany({});
+    res.json({ message: "All student records have been deleted" });
+  } catch (err) {
+    logger.error("deleteAllStudents Error:", err);
+    res.status(500).json({ error: "Failed to delete all records. Contact admin." });
   }
 };
 
@@ -205,10 +242,26 @@ export const deleteStudent = async (req, res) => {
 export const getStudentByRoll = async (req, res) => {
   try {
     const { rollNo } = req.params;
-    const student = await Student.findOne({ rollNumber: rollNo.trim() });
+    const student = await Student.findOne({ rollNumber: rollNo.trim() }).lean();
     if (!student) return res.status(404).json({ message: "Candidate not found in registry." });
+
+    // Look for their most recent seat allocation
+    const allocation = await SeatAllocation.findOne({ studentId: student._id })
+      .populate("roomId", "roomNo")
+      .populate("examId", "examName date")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (allocation) {
+      student.assignedRoom = allocation.roomId?.roomNo;
+      student.assignedSeat = allocation.seatNumber;
+      student.examName = allocation.examId?.examName;
+      student.examDate = allocation.examId?.date;
+    }
+
     res.json(student);
   } catch (err) {
-    res.status(500).json({ message: "Registry query failed", error: err.message });
+    logger.error("getStudentByRoll Error:", err);
+    res.status(500).json({ error: "Registry query failed. Please try again later." });
   }
 };

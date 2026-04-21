@@ -1,5 +1,6 @@
 import Student from "../models/student.js";
 import Room from "../models/room.js";
+import SeatAllocation from "../models/seatAllocation.js";
 
 // Helper to shuffle array (Fisher-Yates)
 const shuffle = (array) => {
@@ -73,8 +74,13 @@ export const runAllocation = async (req, res) => {
 
 export const resetAllocation = async (req, res) => {
   try {
+    // 1. Reset base entities
     await Student.updateMany({}, { allocationStatus: "Pending", roomNumber: null });
     await Room.updateMany({}, { filled: 0 });
+    
+    // 2. Clear out advanced routing records
+    await SeatAllocation.deleteMany({});
+    
     res.json({ message: "Seating Plan reset successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });

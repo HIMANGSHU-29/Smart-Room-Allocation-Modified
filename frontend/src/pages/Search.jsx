@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
 import { Search as SearchIcon, MapPin, User, Home, ArrowRight, BookOpen, Zap } from "lucide-react";
 import logo from "../assets/logo.svg";
 import { Link } from "react-router-dom";
@@ -85,15 +84,39 @@ export default function Search() {
                 <div className="flex flex-wrap gap-4 text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest justify-center lg:justify-start">
                   <span className="flex items-center gap-2"><User size={14} className="text-blue-500" /> <span className="number-solid">{student.rollNumber}</span></span>
                   <span className="flex items-center gap-2 underline underline-offset-4 decoration-blue-200 decoration-2">{student.department} Cycle</span>
+                  {student.examName && (
+                    <span className="flex items-center gap-2 text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md">
+                      {student.examName} ({new Date(student.examDate).toLocaleDateString()})
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="w-full lg:w-auto px-10 py-8 bg-blue-50 rounded-[2rem] md:rounded-[2.5rem] border border-blue-100 flex flex-col items-center justify-center">
-                <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-3">Venue Assigned</p>
-                <div className="flex items-center gap-3">
-                  <MapPin size={24} className="text-blue-600" />
-                  <span className="text-4xl md:text-5xl font-serif-luxury text-blue-900 number-solid">{student.roomNumber || "Pending"}</span>
+
+              {student.assignedSeat ? (
+                <div className="w-full lg:w-auto flex gap-4">
+                  <div className="px-8 py-6 bg-slate-50 rounded-[2rem] border border-slate-200 flex flex-col items-center justify-center">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Room Assigned</p>
+                    <div className="flex items-center gap-2">
+                      <MapPin size={20} className="text-slate-500" />
+                      <span className="text-3xl font-serif-luxury text-slate-800 number-solid">{student.assignedRoom}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="px-10 py-6 bg-blue-500 text-white rounded-[2rem] shadow-xl shadow-blue-500/20 flex flex-col items-center justify-center scale-105 border border-blue-400">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-100 mb-2">Exact Seat No.</p>
+                    <span className="text-4xl font-serif-luxury font-black tracking-tight">{student.assignedSeat}</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="w-full lg:w-auto px-10 py-8 bg-slate-50 rounded-[2rem] border border-slate-200 flex flex-col items-center justify-center opacity-70">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Venue Assigned</p>
+                  <div className="flex items-center gap-3">
+                    <MapPin size={24} className="text-slate-400" />
+                    <span className="text-2xl font-serif-luxury text-slate-500 italic">Pending Allocation</span>
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         )}

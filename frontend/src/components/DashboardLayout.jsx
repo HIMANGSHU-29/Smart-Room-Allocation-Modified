@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, DoorOpen, Zap, FileBarChart, Settings, LogOut, ChevronRight, Menu, X as CloseIcon, Calendar } from "lucide-react";
 import logo from "../assets/logo.svg";
 import { useAuth } from "../contexts/AuthContext";
@@ -12,6 +12,7 @@ export default function DashboardLayout() {
   const menuItems = [
     { name: "Overview", icon: <LayoutDashboard size={18} />, path: "/dashboard" },
     { name: "Students", icon: <Users size={18} />, path: "/dashboard/students" },
+    { name: "Teachers", icon: <Users size={18} />, path: "/dashboard/teachers" },
     { name: "Exam Halls", icon: <DoorOpen size={18} />, path: "/dashboard/rooms" },
     { name: "Exams", icon: <Calendar size={18} />, path: "/dashboard/exams" },
     { name: "Seating Plan", icon: <Zap size={18} />, path: "/dashboard/allocation" },

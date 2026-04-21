@@ -56,6 +56,9 @@ const studentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+studentSchema.index({ allocationStatus: 1 });
+studentSchema.index({ roomNumber: 1 });
+
 const Student = mongoose.model("Student", studentSchema);
 
 export default Student;
