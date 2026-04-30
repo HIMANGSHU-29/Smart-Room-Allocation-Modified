@@ -26,7 +26,3 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
-
-# User uploads and temporary processing 
-uploads/
-tmp/
